@@ -19,4 +19,10 @@ func main() {
 	}
 	base_url := args[0]
 	fmt.Println("starting crawl of:", base_url)
+	html, err := getHTML(base_url)
+	if err != nil {
+		fmt.Println("error: could not load page:", err)
+		os.Exit(1)
+	}
+	fmt.Println(html)
 }
