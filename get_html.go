@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -33,4 +34,59 @@ func getHTML(rawURL string) (string, error) {
 	}
 	defer res.Body.Close()
 	return string(body), nil
+}
+
+func crawlPage(rawBaseURL string, pages map[string]int) {
+	normBaseURL, err := normalizeURL(rawBaseURL)
+	if err != nil {
+		fmt.Println("could not normalise base url:", rawBaseURL)
+		return
+	}
+	baseURL, err := url.Parse(normBaseURL)
+	if err != nil {
+		fmt.Println("could not parse base url:", normBaseURL)
+		return
+	}
+	var rawCurrentURL string
+	listURL := []string{normBaseURL}
+	//pages[normBaseURL] = 1
+	for {
+		if len(listURL) == 0 {
+			break
+		}
+		rawCurrentURL = listURL[0]
+		listURL = listURL[1:]
+		normCurrentURL, err := normalizeURL(rawCurrentURL)
+		if err != nil {
+			fmt.Println("could not normalise current url:", rawBaseURL)
+			continue
+		}
+		currentURL, err := url.Parse(normCurrentURL)
+		if err != nil {
+			fmt.Println("could not parse current url:", rawBaseURL)
+			continue
+		}
+		if currentURL.Host != baseURL.Host {
+			//fmt.Println("different hosts:", currentURL)
+			continue
+		}
+		if _, ok := pages[normCurrentURL]; ok {
+			pages[normCurrentURL] += 1
+			continue
+		} else {
+			pages[normCurrentURL] = 1
+		}
+		html, err := getHTML(normCurrentURL)
+		if err != nil {
+			continue
+		}
+		fmt.Println("...crawling now:", normCurrentURL)
+		newListURL, err := getURLsFromHTML(html, rawBaseURL)
+		if err != nil {
+			fmt.Println("error: could not get urls from html")
+			continue
+		}
+		listURL = append(listURL, newListURL...)
+	}
+
 }

@@ -19,10 +19,16 @@ func main() {
 	}
 	base_url := args[0]
 	fmt.Println("starting crawl of:", base_url)
-	html, err := getHTML(base_url)
+	_, err := getHTML(base_url)
 	if err != nil {
 		fmt.Println("error: could not load page:", err)
 		os.Exit(1)
 	}
-	fmt.Println(html)
+	//fmt.Println(html)
+	pages := make(map[string]int)
+	crawlPage(base_url, pages)
+	fmt.Println("\n****** List of pages ******")
+	for url, count := range pages {
+		fmt.Println(url, ":", count)
+	}
 }
