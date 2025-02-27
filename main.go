@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"sync"
 )
 
 func main() {
@@ -17,18 +19,33 @@ func main() {
 		fmt.Println("too many arguments provided")
 		os.Exit(1)
 	}
-	base_url := args[0]
-	fmt.Println("starting crawl of:", base_url)
-	_, err := getHTML(base_url)
+	rawBaseUrl := args[0]
+	normBaseURL, err := normalizeURL(rawBaseUrl)
 	if err != nil {
-		fmt.Println("error: could not load page:", err)
+		fmt.Println("could not normalise base URL:", rawBaseUrl)
 		os.Exit(1)
 	}
-	//fmt.Println(html)
-	pages := make(map[string]int)
-	crawlPage(base_url, pages)
+	baseURL, err := url.Parse(normBaseURL)
+	if err != nil {
+		fmt.Println("error: invalid base URL format:", normBaseURL)
+		os.Exit(1)
+	}
+
+	cfg := &config{
+		pages:              make(map[string]int),
+		baseURL:            baseURL,
+		mu:                 &sync.Mutex{},
+		concurrencyControl: make(chan struct{}, 10), // Limit do X jednoczesnych watkow (np. 5)
+		wg:                 &sync.WaitGroup{},
+	}
+
+	fmt.Println("starting crawl of:", normBaseURL)
+	cfg.wg.Add(1)
+	go cfg.crawlPage(normBaseURL)
+	cfg.wg.Wait()
+
 	fmt.Println("\n****** List of pages ******")
-	for url, count := range pages {
+	for url, count := range cfg.pages {
 		fmt.Println(url, ":", count)
 	}
 }
