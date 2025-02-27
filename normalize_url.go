@@ -46,7 +46,7 @@ func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
 					url := strings.TrimSpace(attr.Val)
 					if len(url) > 0 {
 						if url[0] == '/' {
-							url = rawBaseURL + url
+							url = strings.TrimRight(rawBaseURL, "/") + url
 						}
 					}
 					normalizedURL, err := normalizeURL(url)

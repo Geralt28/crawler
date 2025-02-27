@@ -47,40 +47,40 @@ func crawlPage(rawBaseURL string, pages map[string]int) {
 		fmt.Println("could not parse base url:", normBaseURL)
 		return
 	}
-	var rawCurrentURL string
+	var currentURL string
 	listURL := []string{normBaseURL}
 	//pages[normBaseURL] = 1
 	for {
 		if len(listURL) == 0 {
 			break
 		}
-		rawCurrentURL = listURL[0]
+		currentURL = listURL[0]
 		listURL = listURL[1:]
-		normCurrentURL, err := normalizeURL(rawCurrentURL)
-		if err != nil {
-			fmt.Println("could not normalise current url:", rawBaseURL)
-			continue
-		}
-		currentURL, err := url.Parse(normCurrentURL)
+		//normCurrentURL, err := normalizeURL(rawCurrentURL)
+		//if err != nil {
+		//	fmt.Println("could not normalise current url:", rawBaseURL)
+		//	continue
+		//}
+		cURL, err := url.Parse(currentURL)
 		if err != nil {
 			fmt.Println("could not parse current url:", rawBaseURL)
 			continue
 		}
-		if currentURL.Host != baseURL.Host {
+		if cURL.Host != baseURL.Host {
 			//fmt.Println("different hosts:", currentURL)
 			continue
 		}
-		if _, ok := pages[normCurrentURL]; ok {
-			pages[normCurrentURL] += 1
+		if _, ok := pages[currentURL]; ok {
+			pages[currentURL] += 1
 			continue
 		} else {
-			pages[normCurrentURL] = 1
+			pages[currentURL] = 1
 		}
-		html, err := getHTML(normCurrentURL)
+		html, err := getHTML(currentURL)
 		if err != nil {
 			continue
 		}
-		fmt.Println("...crawling now:", normCurrentURL)
+		fmt.Println("...crawling now:", currentURL)
 		newListURL, err := getURLsFromHTML(html, rawBaseURL)
 		if err != nil {
 			fmt.Println("error: could not get urls from html")
