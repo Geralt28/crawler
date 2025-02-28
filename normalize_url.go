@@ -19,7 +19,6 @@ func normalizeURL(inputURL string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	if parsedURL.Scheme == "" {
 		parsedURL.Scheme = "http"
 	}
@@ -37,7 +36,6 @@ func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
 		return nil, err
 	}
 	var urls []string
-
 	var f func(*html.Node)
 	f = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "a" {
@@ -61,6 +59,5 @@ func getURLsFromHTML(htmlBody, rawBaseURL string) ([]string, error) {
 		}
 	}
 	f(n)
-
 	return urls, nil
 }

@@ -12,6 +12,7 @@ import (
 type config struct {
 	pages              map[string]int
 	baseURL            *url.URL
+	maxPages           int
 	mu                 *sync.Mutex
 	concurrencyControl chan struct{}
 	wg                 *sync.WaitGroup
@@ -20,6 +21,12 @@ type config struct {
 func (cfg *config) addPageVisit(normalizedURL string) (isFirst bool) {
 	cfg.mu.Lock()
 	defer cfg.mu.Unlock()
+
+	// Stop adding new pages if the limit is reached (for stopping delayed adding)
+	if len(cfg.pages) >= cfg.maxPages {
+		return false
+	}
+
 	if _, exists := cfg.pages[normalizedURL]; exists {
 		cfg.pages[normalizedURL]++
 		return false
@@ -46,14 +53,21 @@ func getHTML(rawURL string) (string, error) {
 		fmt.Println("error: could not read body:", err)
 		return "", err
 	}
-
 	return string(body), nil
 }
 
 func (cfg *config) crawlPage(normCurrentURL string) {
+
 	defer cfg.wg.Done()
 	cfg.concurrencyControl <- struct{}{}        // Acquire a slot
 	defer func() { <-cfg.concurrencyControl }() // Release the slot when done
+
+	cfg.mu.Lock()
+	if len(cfg.pages) >= cfg.maxPages {
+		cfg.mu.Unlock()
+		return
+	}
+	cfg.mu.Unlock()
 
 	cURL, err := url.Parse(normCurrentURL)
 	if err != nil {
