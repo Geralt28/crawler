@@ -21,12 +21,10 @@ type config struct {
 func (cfg *config) addPageVisit(normalizedURL string) (isFirst bool) {
 	cfg.mu.Lock()
 	defer cfg.mu.Unlock()
-
 	// Stop adding new pages if the limit is reached (for stopping delayed adding)
 	if len(cfg.pages) >= cfg.maxPages {
 		return false
 	}
-
 	if _, exists := cfg.pages[normalizedURL]; exists {
 		cfg.pages[normalizedURL]++
 		return false

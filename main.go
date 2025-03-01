@@ -4,9 +4,43 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"sort"
 	"strconv"
 	"sync"
 )
+
+// Do trzymania danych do sortowania i drukowania
+type pageInfo struct {
+	url   string
+	count int
+}
+
+// Sortuj strony po najwiekszej ilosci odwiedzin, a nastepnie alfabetycznie
+func sortPagesByLinks(pages map[string]int) []pageInfo {
+	var sortedPages []pageInfo
+	// Convert map to sctruct for sorting and then printing
+	for url, count := range pages {
+		sortedPages = append(sortedPages, pageInfo{url, count})
+	}
+	// Sortuj
+	sort.Slice(sortedPages, func(i, j int) bool {
+		if sortedPages[i].count == sortedPages[j].count {
+			return sortedPages[i].url < sortedPages[j].url // Alphabetical order
+		}
+		return sortedPages[i].count > sortedPages[j].count // Descending order
+	})
+	return sortedPages
+}
+
+func printReport(pages map[string]int, baseURL string) {
+	fmt.Println("\n=============================")
+	fmt.Println("  REPORT for", baseURL)
+	fmt.Println("=============================")
+	sortedPages := sortPagesByLinks(pages)
+	for _, page := range sortedPages {
+		fmt.Println("Found", page.count, "internal links to", page.url)
+	}
+}
 
 func main() {
 	fmt.Println("Hello, World!")
@@ -70,8 +104,10 @@ func main() {
 	go cfg.crawlPage(normBaseURL)
 	cfg.wg.Wait()
 
-	fmt.Println("\n****** List of pages ******")
-	for url, count := range cfg.pages {
-		fmt.Println(url, ":", count)
-	}
+	printReport(cfg.pages, cfg.baseURL.String())
+
+	//fmt.Println("\n****** List of pages ******")
+	//for url, count := range cfg.pages {
+	//	fmt.Println(url, ":", count)
+	//}
 }
